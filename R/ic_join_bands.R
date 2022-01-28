@@ -1,3 +1,11 @@
+#' ic_join_bands
+#' @param x,y	A pair of ImageCollections
+#' @param by A character vector of variables to join by.
+#' @return
+#' An object of the same type as `x`. The output has the following properties:
+#' Same number of images as `x`
+#' Total number of bands equal the number of bands in `x` plus the number of bands in `y`
+
 ic_join_bands<- function(x, y, by){
 
   # Define an inner join

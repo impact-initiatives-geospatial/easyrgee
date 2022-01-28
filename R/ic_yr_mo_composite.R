@@ -6,6 +6,7 @@
 #' @param monthly_stat_per time period to calculate monthly stat over. There are two options: `year` (default), or `range`.
 #' if year is selected it will calculate each monthly statistic for every year set in `year_range`. If `range` is selected it will calculate 1 monthly statistic
 #' across all years provided in `year_range`
+#' @export
 
 
 
@@ -92,7 +93,21 @@ ic_yr_mo_composite_stat <- function(ic,
   return(ee$ImageCollection$fromImages(composites_list$flatten()))
 }
 
+#' function/reducer selecter - helper function
+#' @param x reducer/statistic using typical r-syntax (character)
 
+fun_sel <-  function(x){switch(x,
+
+                               "mean" = function(x)x$reduce(ee$Reducer$mean()),
+                               "max" = function(x)x$reduce(ee$Reducer$max()),
+                               "min" = function(x)x$reduce(ee$Reducer$min()),
+                               "median"= function(x)x$reduce(ee$Reducer$median()),
+                               "sum"= function(x)x$reduce(ee$Reducer$stdDev()),
+                               "sd" =  function(x)x$reduce(ee$Reducer$stdDev()),
+                               NULL
+
+)
+}
 
 
 

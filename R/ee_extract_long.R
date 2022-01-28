@@ -4,6 +4,7 @@
 #' @param sf_col sf column to include in output
 #' @param scale scale (meters) of imageCollection
 #' @param reducer sf_col level reducer
+#' @export
 
 
 
