@@ -7,7 +7,6 @@
 #' @export
 
 
-
 ee_extract_long <-  function(ic,
                              sf,
                              sf_col,
@@ -44,9 +43,15 @@ ee_extract_long <-  function(ic,
 
   # client side
   band_names_cli<- ic$first()$bandNames()$getInfo()
+
+  # regex to be removed from name to create date col
   rm_rgx <- paste0(".*",band_names_cli)
   rm_rgx <- glue::glue_collapse(rm_rgx,sep = "|")
-  extract_rgx <- glue::glue_collapse(band_names_cli,sep = "|")
+
+  # regex to extract parameter identifier
+  # reorder so shorter names with common prefix to another band names wont replace string before longer version
+  extract_rgx <- band_names_cli[stringr::str_order(band_names_cli,decreasing=T)]
+  extract_rgx <- glue::glue_collapse(extract_rgx,sep = "|")
 
   ic_extracted_wide_sf |>
     st_drop_geometry() |>
