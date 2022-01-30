@@ -2,3 +2,10 @@
 
 export(ee_extract_long)
 export(ic_yr_mo_composite_stat)
+importFrom(dplyr,mutate)
+importFrom(dplyr,select)
+importFrom(rgee,ee)
+importFrom(rlang,.data)
+importFrom(stringr,str_extract)
+importFrom(stringr,str_remove)
+importFrom(stringr,str_replace_all)

@@ -6,6 +6,7 @@
 #' @param monthly_stat_per time period to calculate monthly stat over. There are two options: `year` (default), or `range`.
 #' if year is selected it will calculate each monthly statistic for every year set in `year_range`. If `range` is selected it will calculate 1 monthly statistic
 #' across all years provided in `year_range`
+#' @importFrom rgee ee
 #' @export
 
 
@@ -33,9 +34,9 @@ ic_yr_mo_composite_stat <- function(ic,
     cat(crayon::green(glue::glue("calculating 1-year monthly {stat}s from {year_range[1]} to {year_range[2]}")),"\n")
     composites_list <-
       year_list$map(
-        ee_utils_pyfunc(function (y) {
+        rgee::ee_utils_pyfunc(function (y) {
           month_list$map(
-            ee_utils_pyfunc(function (m) {
+            rgee::ee_utils_pyfunc(function (m) {
               # ic_pre_filt <-
               ic_filtered_yr_mo<- ic$
                 filter(ee$Filter$calendarRange(y, y, 'year'))$
@@ -59,7 +60,7 @@ ic_yr_mo_composite_stat <- function(ic,
     cat(crayon::green(glue::glue("calculating {num_years}-year monthly {stat}s from {year_range[1]} to {year_range[2]}")),"\n")
     composites_list <-
       month_list$map(
-        ee_utils_pyfunc(
+        rgee::ee_utils_pyfunc(
           function(m) {
             ic_filtered_yr_mo <- ic$
               filter(ee$Filter$calendarRange(year_range[1], year_range[2], 'year'))$
@@ -67,7 +68,7 @@ ic_yr_mo_composite_stat <- function(ic,
 
             bnames<- ic_filtered_yr_mo$first()$bandNames()
             bnames_new <- bnames$map(
-              ee_utils_pyfunc(function(x){
+              rgee::ee_utils_pyfunc(function(x){
                 ee$String(x)$cat(ee$String("_"))$cat(ee$String(stat))
 
               })

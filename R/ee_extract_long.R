@@ -4,7 +4,10 @@
 #' @param sf_col sf column to include in output
 #' @param scale scale (meters) of imageCollection
 #' @param reducer sf_col level reducer
+#' @importFrom dplyr select mutate
+#' @importFrom stringr str_remove str_replace_all str_extract
 #' @export
+
 
 
 ee_extract_long <-  function(ic,
@@ -22,8 +25,8 @@ ee_extract_long <-  function(ic,
     "max" = ee$Reducer$mean(),
     "min" = ee$Reducer$min(),
     "median"= ee$Reducer$median(),
-    "sum"= function(x)x$sum(),
-    "sd" = x$reduce(ee$Reducer$stdDev()),
+    "sum"= ee$Reducer$sum(),
+    "sd" = ee$Reducer$stdDev(),
     NULL
   )
 
@@ -54,15 +57,15 @@ ee_extract_long <-  function(ic,
   extract_rgx <- glue::glue_collapse(extract_rgx,sep = "|")
 
   ic_extracted_wide_sf |>
-    st_drop_geometry() |>
-    pivot_longer(-1) |>
+    sf::st_drop_geometry() |>
+    tidyr::pivot_longer(-1,names_to = "name") |>
     mutate(
-      parameter=str_extract(name, pattern=extract_rgx),
-      date= str_remove(string = name, pattern = rm_rgx) |>
+      parameter=str_extract(.data$name, pattern=extract_rgx),
+      date= str_remove(string = .data$name, pattern = rm_rgx) |>
         str_replace_all("_","-") |> lubridate::ymd()
 
     ) |>
-    select(-name)
+    select(-.data$name)
 
 
 }
