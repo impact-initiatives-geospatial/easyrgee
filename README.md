@@ -4,6 +4,8 @@
 # easyrgee
 
 <!-- badges: start -->
+
+[![R-CMD-check](https://github.com/impact-initiatives-geospatial/easyrgee/workflows/R-CMD-check/badge.svg)](https://github.com/impact-initiatives-geospatial/easyrgee/actions)
 <!-- badges: end -->
 
 The goal of easyrgee is to …
