@@ -4,7 +4,7 @@
 \name{easyrgee-package}
 \alias{easyrgee}
 \alias{easyrgee-package}
-\title{easyrgee: What the Package Does (Title Case)}
+\title{easyrgee: easy rgee - wrappers for `rgee` functions}
 \description{
 More about what it does (maybe more than one line) Use four spaces when indenting paragraphs within the Description.
 }
