@@ -96,35 +96,20 @@ median_ndvi |>
 Start time of rainy season can have implications on crop harvest which
 can then impact well-being/livelihoods. Therefore, we have made a
 function to help identify a date which can be considered start of rainy
-season. The function works by
+season.
 
-1.  Creating a cumulative precipitation `ee$ImageCollection` with each
-    all pixels in each consecutive image containing the sum of all
-    previous values
-2.  It then finds the first day the user-defined threshold was met for
-    each pixel. The result is a raster ranging from 0-365 (days of year)
+Lets first look at cumulative rainfall
+
+Let’s load in CHIRPS 2016 daily rainfall data and then use the
+`ee_accumulate_band_ic` function to create a cumulative precipitation
+`ee$ImageCollection` which stores pixel-wise accumulation of values with
+each consecutive image containing the sum of it’s value with all
+previous `Image`s
 
 ``` r
 chirps <-  ee$ImageCollection("UCSB-CHG/CHIRPS/DAILY")$
   filterDate("2016-01-01","2016-12-31")
-precip_threshold_doy<- ee_accum_reduce_to_doy(ic = chirps,thresh = 20,band = "precipitation")
 
-
-#visualize
-Map$setCenter(zoom = 3)
-Map$addLayer(precip_threshold_doy,
-             visParams = list(min=0, max=365, palette='#9ecae1,#ffffff,#ffeda0,#feb24c,#f03b20'))
-```
-
-![mapPrecip](man/figures/mapPrecip.png)
-
-The function also relies on the internal function:
-`ee_accumulate_band_ic` which is handy on it’s own. Using this function
-is handy to explore the data and set a reasonable threshold for your
-context. Here we create an `imageCollection` of cumulative precipitation
-values.
-
-``` r
 precip_cumulative<- easyrgee::ee_accumulate_band_ic(ic = chirps, band = "precipitation")
 ```
 
@@ -145,4 +130,37 @@ median_cumulative_rainfall |>
   theme_minimal()
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-9-1.png" width="100%" />
+
+From the above plot, let’s set 20 mm as a good threshold to use as the
+start of rainy season
+
+With our threshold we can use `ee_accum_reduce_to_doy` which
+
+1.  Creates a cumulative precipitation `ee$ImageCollection` as above
+2.  Finds the first day the user-defined threshold was met for each
+    pixel.
+3.  Returns an `ee$Image` ranging from 0-365 (days of year)
+
+using the chirps 2016 daily rainfall data let’s use
+`ee_accum_reduce_to_doy` to return a day of year (doy) `ee$Image` where
+the pixel values represent the first day the cumulative rainfall
+surpassed our set threshold 20 mm
+
+``` r
+
+precip_threshold_doy<- easyrgee::ee_accum_reduce_to_doy(ic = chirps,thresh = 20,band = "precipitation")
+```
+
+We can use `rgee::Map` functions to visualize the image on a leaflet map
+(in this GitHub README the map is not interactive although it is in the
+R-session)
+
+``` r
+#visualize
+Map$setCenter(zoom = 3)
+Map$addLayer(precip_threshold_doy,
+             visParams = list(min=0, max=365, palette='#9ecae1,#ffffff,#ffeda0,#feb24c,#f03b20'))
+```
+
+![mapPrecip](man/figures/mapPrecip.png)
