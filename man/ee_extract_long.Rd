@@ -2,7 +2,7 @@
 % Please edit documentation in R/ee_extract_long.R
 \name{ee_extract_long}
 \alias{ee_extract_long}
-\title{wrapper for ee_extract}
+\title{wrapper for \code{\link[rgee:ee_extract]{rgee::ee_extract()}} to help pivot from wide to long}
 \usage{
 ee_extract_long(ic, sf, sf_col, scale, reducer)
 }
@@ -18,5 +18,5 @@ ee_extract_long(ic, sf, sf_col, scale, reducer)
 \item{reducer}{sf_col level reducer}
 }
 \description{
-wrapper for ee_extract
+wrapper for \code{\link[rgee:ee_extract]{rgee::ee_extract()}} to help pivot from wide to long
 }

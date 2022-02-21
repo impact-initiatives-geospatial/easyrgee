@@ -1,4 +1,4 @@
-#' wrapper for ee_extract
+#' wrapper for [rgee::ee_extract()] to help pivot from wide to long
 #' @param ic ImageCollection
 #' @param sf sf object for spatial disaggregation
 #' @param sf_col sf column to include in output

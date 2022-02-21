@@ -1,5 +1,6 @@
 ---
 title: "Common Functions"
+author: Zack Arno
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{aa-common_functions}
@@ -12,23 +13,110 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+
 ```
 
-```{r}
+```{r warning=FALSE, message=FALSE}
+
 library(easyrgee)
+library(rgee)
+library(ggplot2)
+
+ee_Initialize()
+
+dat<- easyrgee::adm1_ne_nga
 
 
+chirps <-  ee$ImageCollection("UCSB-CHG/CHIRPS/DAILY")$
+  filterDate("2016-01-01","2016-12-31")
+
+```
+
+```{r, echo=F, eval=TRUE}
+
+dat_internal <-  readRDS("dat_internal.rds")
+median_ndvi <- dat_internal$median_ndvi
+median_cumulative_rainfall <-  dat_internal$median_cumulative_rainfall
+```
+# Zonal Stats
+
+`ee_extract_long` is a tool that can be used to extract values or zonal statistics over both Images and Image collections. It is a wrapper around `rgee::ee_extract` which does the same, but returns the output in wide format. `ee_extract_long` also contains a several server-side processes and client-side regex manipulations to help standardize the output. The result is a data.frame ready for processing/plotting.
+
+Here is a short example
+
+```{r, eval=F}
+
+ 
+modis_ndvi <- ee$ImageCollection("MODIS/006/MOD13Q1")$select("NDVI" )$filterDate("2016-01-01","2016-12-31")
+
+
+median_ndvi<- ee_extract_long(ic = modis_ndvi,
+                              sf = dat,
+                              sf_col = "ADM1_EN",
+                              scale = 250,
+                              reducer = "median")
+```
+
+
+### Visualize NDVI
+
+```{r, fig.width=7}
+median_ndvi |> 
+  ggplot(aes(x=date, y= value, color=ADM1_EN))+
+  geom_line(lwd=1)+
+  scale_color_manual(name="State (NGA)" ,values =c("#ee5859","#DBD6C7", "#818183") )+
+  theme_minimal()
 
 ```
 
 
-# SOS rains
-Start time of rainy season can have implications on crop harvest which can then impact human well-being. Therefore we have made a function to help pin point dates that can be considered the start of the rains.
+# Identify Start of Rainy Season
+
+Start time of rainy season can have implications on crop harvest which can then impact well-being/livelihoods. Therefore, we have made a function to help identify a date which can be considered start of rainy season. The function works by
+
+1. Creating a cumulative precipitation `ee$ImageCollection` with each all pixels in each consecutive image containing the sum of all previous values
+2. It then finds the first day the user-defined threshold was met for each pixel. The result is a raster ranging from 0-365 (days of year)
 
 
-```{r}
+```{r, fig.width=7}
+precip_threshold_doy<- ee_accum_reduce_to_doy(ic = chirps,thresh = 20,band = "precipitation")
 
 
+#visualize
+Map$setCenter(zoom = 3)
+Map$addLayer(precip_threshold_doy,
+             visParams = list(min=0, max=365, palette='#9ecae1,#ffffff,#ffeda0,#feb24c,#f03b20'))
+
+```
+
+
+The function also relies on the internal function: `ee_accumulate_band_ic` which is handy on it's own. Using this function is handy to explore the data and set a reasonable threshold for your context. Here we create an `imageCollection` of cumulative precipitation values. 
+
+```{r, echo=T, eval=F}
+precip_cumulative<- ee_accumulate_band_ic(ic = chirps, band = "precipitation")
+```
+
+Next we again use `ee_extract_long` to extract the daily median values of 3 different geographic zones 
+
+```{r,eval= F}
+median_cumulative_rainfall<- ee_extract_long(ic = precip_cumulative,sf = dat,sf_col = "ADM1_EN",scale = 5000,reducer = "median")
+```
+
+
+# Plot Rainfall Accumulation
+```{r, fig.width=7}
+median_cumulative_rainfall |> 
+  ggplot(aes(x=date, y= value, color=ADM1_EN))+
+  geom_line(lwd=1)+
+  scale_color_manual(name="State (NGA)" ,values =c("#ee5859","#DBD6C7", "#818183") )+
+  theme_minimal()
+
+
+  
+```
+
+
+```{r,eval=F,echo=F}
 # the code that got me there
 #####################3
 tst_ic <- chirps_one_yr$select("precipitation")
@@ -47,56 +135,12 @@ ret_list$getInfo()
 ret_list |> ee_print()
 
 ee$ImageCollection$fromImages(ret_list$flatten()) |> ee_print()
-
-
-# functionalizing
-#################
-accumulate_img_bands_to_list <-  function(img,lst){
-  previous <- ee$Image(ee$List(lst)$get(-1))
-  added <- img$add(previous)$
-  set('system:time_start', img$get('system:time_start'))
-  return(
-    # ee$List(list(lst))$add(added)
-    ee$List(list(lst))$add(ee$List(added))
-    
-    )
-}
-# put it together
-##################################################
-accumulate_ic_band <-  function(ic){
-  # should think about "first" definition
-  first <- ee$List(list(ee$Image(ic$first())))
-  accumulated_img_list <-  ic$iterate(accumulate_img_bands_to_list,first)
-  ee$ImageCollection$fromImages(ee$List(accumulated_img_list)$flatten())
-}
-chirps_cummulative <- accumulate_ic_band(ic = chirps_one_yr)
-chirps_cummulative |> ee_get_date_ic()
-
-thresh_doy = function(img){
-     doy = img$date()$getRelative('day', 'year');
-     doyBand = ee$Image$constant(doy)$uint16()$rename('doy')
-     const1000 = ee$Image$constant(1000)$uint16()$rename('const1000')
-     lt_thresh_mask = img$select("precipitation")$lt(20)
-     gte_thresh_mask = img$select("precipitation")$gte(20)
-     img_w_doy = img$addBands(doyBand$select("doy"))$addBands(const1000$select('const1000'))
-     lets_see = img_w_doy$select("doy")$where(lt_thresh_mask, const1000)
-    return(lets_see)
-  
-}
-
-cumulative_lt_date_raster <- chirps_cummulative$map(thresh_doy)
-
-
-
-
-Map$addLayer(cumulative_lt_date_raster$min(),visParams = list(min=0, max=365, palette='#9ecae1,#ffffff,#ffeda0,#feb24c,#f03b20'))
-  
 ```
 
 
-JavaScript
 
-```{r}
+
+```{r, echo=F,eval=F}
 
 
  chirps = ee$ImageCollection("UCSB-CHG/CHIRPS/DAILY")
@@ -377,7 +421,7 @@ Map.addLayer(cumulative_lt$min(),
 
 
 
-```{r setup}
+```{r eval=F, echo=F}
 #' accumulate_band
 #' @param ic imageCollection
 #' @param band band to accumulate
@@ -459,33 +503,5 @@ ck<- accumulate_band_values(ic = chirps_2016,band = "precipitation")
 ck |> ee_print()
 ```
   
-var time0 = chirps_one_yr.first().get('system:time_start');
 
-var first = ee.List([
-  // Rename the first band 'EVI'.
-  ee.Image(0).set('system:time_start', time0).select([0], ['precipitation'])
-]);
-
-// This is a function to pass to Iterate().
-// As anomaly images are computed, add them to the list.
-var accumulate = function(image, list) {
-  // Get the latest cumulative anomaly image from the end of the list with
-  // get(-1).  Since the type of the list argument to the function is unknown,
-  // it needs to be cast to a List.  Since the return type of get() is unknown,
-  // cast it to Image.
-  var previous = ee.Image(ee.List(list).get(-1));
-  // Add the current anomaly to make a new cumulative anomaly image.
-  var date_ymd = ee.Date(image.get("system:time_start"))
-
-  var added = image.add(previous)
-    // Propagate metadata to the new image.
-    .set('system:time_start', image.get('system:time_start'))
-    .set('date_ymd',date_ymd)
-  // Return the list with the cumulative anomaly inserted.
-  return ee.List(list).add(added);
-};
-
-// Create an ImageCollection of cumulative anomaly images by iterating.
-// Since the return type of iterate is unknown, it needs to be cast to a List.
-var cumulative = ee.ImageCollection(ee.List(chirps_one_yr.iterate(accumulate, first)));
   

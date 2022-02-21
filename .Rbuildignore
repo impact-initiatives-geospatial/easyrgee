@@ -4,3 +4,4 @@
 ^\.github$
 ^LICENSE\.md$
 ^dev_history\.R$
+^data-raw$

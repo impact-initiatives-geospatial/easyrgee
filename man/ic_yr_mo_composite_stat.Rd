@@ -21,9 +21,9 @@ ic_yr_mo_composite_stat(
 
 \item{stat}{statistic/reducer to reduce ImageCollection by}
 
-\item{monthly_stat_per}{time period to calculate monthly stat over. There are two options: `year` (default), or `range`.
-if year is selected it will calculate each monthly statistic for every year set in `year_range`. If `range` is selected it will calculate 1 monthly statistic
-across all years provided in `year_range`}
+\item{monthly_stat_per}{time period to calculate monthly stat over. There are two options: \code{year} (default), or \code{range}.
+if year is selected it will calculate each monthly statistic for every year set in \code{year_range}. If \code{range} is selected it will calculate 1 monthly statistic
+across all years provided in \code{year_range}}
 }
 \description{
 make monthly composites from image collection

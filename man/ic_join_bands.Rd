@@ -12,9 +12,9 @@ ic_join_bands(x, y, by)
 \item{by}{A character vector of variables to join by.}
 }
 \value{
-An object of the same type as `x`. The output has the following properties:
-Same number of images as `x`
-Total number of bands equal the number of bands in `x` plus the number of bands in `y`
+An object of the same type as \code{x}. The output has the following properties:
+Same number of images as \code{x}
+Total number of bands equal the number of bands in \code{x} plus the number of bands in \code{y}
 }
 \description{
 ic_join_bands
